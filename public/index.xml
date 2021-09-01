@@ -29,5 +29,24 @@ plot(cars) Add a new chunk by clicking the Insert Chunk button on the toolbar or
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the Preview button or press Cmd+Shift+K to preview the HTML file).</description>
     </item>
     
+    <item>
+      <title>Pensum</title>
+      <link>http://example.org/pensum/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/pensum/</guid>
+      <description>All books in the syllabus are available online, some also in print.
+Spatial Data Science(Bivand n.d.)  Chap. 1-5 Introduction Chap. 7.1 - 7.2 sf Chap. 8.1 st_read with query Chap. 9 Plotting maps Chap. 15 Spatial Regression   Geocomputation with R(Muenchow n.d.)  Chap. 1 Introduction Chap. 2.1, 2.2, 2.4 and 2.5 Geographic data in R Chap. 3.1, 3.2 Attribute data operations Chap. 4.1, 4.2 Spatial data operations Chap.</description>
+    </item>
+    
+    <item>
+      <title>Recommended process</title>
+      <link>http://example.org/theprocess/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/theprocess/</guid>
+      <description>.xaringan-extra-logo { width: 165px; height: 192px; z-index: 0; background-image: url(hvl_logo_engelsk.jpg); background-size: contain; background-repeat: no-repeat; position: absolute; top:1em;right:1em; }  (function () { let tries = 0 function addLogo () { if (typeof slideshow === &#39;undefined&#39;) { tries += 1 if (tries  Recommended Process  Do your data wrangling in R using the Tidyverse Prepare your map  In Qgis In R using sf/sp  Analysis  Write a reproducible document in Rmarkdown  Rstudio 1.</description>
+    </item>
+    
   </channel>
 </rss>

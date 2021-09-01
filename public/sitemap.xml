@@ -10,6 +10,10 @@
   </url><url>
     <loc>http://example.org/</loc>
   </url><url>
+    <loc>http://example.org/pensum/</loc>
+  </url><url>
+    <loc>http://example.org/theprocess/</loc>
+  </url><url>
     <loc>http://example.org/tags/</loc>
   </url>
 </urlset>

@@ -1,0 +1,292 @@
+---
+title: "Recommended process"
+subtitle: "Just some friendly advice ;-)"
+author: "Arnstein Gjestland"
+institute: "HVL"
+date: "Autumn 2021"
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9Generate the weights matrix in R
+      countIncrementalSlides: true
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+<link href="/rmarkdown-libs/tile-view/tile-view.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/tile-view/tile-view.js"></script>
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 165px;
+height: 192px;
+z-index: 0;
+background-image: url(hvl_logo_engelsk.jpg);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+<div id="recommended-process" class="section level2">
+<h2>Recommended Process</h2>
+<ul>
+<li>Do your data wrangling in R using the Tidyverse</li>
+<li>Prepare your map
+<ul>
+<li>In Qgis</li>
+<li>In R using sf/sp</li>
+</ul></li>
+<li>Analysis
+<ul>
+<li>Write a reproducible document in Rmarkdown
+<ul>
+<li>Rstudio 1.4 GUI-like interface</li>
+<li>Zotero integrated</li>
+</ul></li>
+</ul></li>
+</ul>
+<hr />
+</div>
+<div id="do-your-data-wrangling-in-r-using-the-tidyverse" class="section level2">
+<h2>Do your data wrangling in R using the Tidyverse</h2>
+<p>–</p>
+<ul>
+<li>Use a subdirectory relative to where your main document will reside to contain your data wrangling scripts</li>
+</ul>
+<p>–</p>
+<ul>
+<li>If you read in raw data from files, use a subdirectory (“raw_data”) of the data directory to house your raw data files.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>If you read in the data directly via an api there is no need for a “raw_data” subdirectory</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Use an R markdown notebook to document the data wrangling and make it reproducible. Place this R Notebook in your Data directory.
+<ul>
+<li>Read in the raw data at the top</li>
+<li>Do your wrangling to <strong>Tidy</strong> data</li>
+<li>Prepare an id to later link the data to a map (house id, “kommunenummer”, “grunnkretsnummer” etc.)</li>
+<li>Save out your data in .Rdata and .csv (robust against time decay) formats.</li>
+</ul></li>
+</ul>
+<p>–</p>
+<ul>
+<li>Important to get the dataset finished (as far as possible). Will save us huge amounts of time and work.</li>
+</ul>
+<hr />
+</div>
+<div id="do-your-data-wrangling-in-r-using-the-tidyverse-cont." class="section level2">
+<h2>Do your data wrangling in R using the Tidyverse, cont.</h2>
+<p>–</p>
+<ul>
+<li>Check that the variables have the intended format, date, factor, character, numeric etc.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Note the format/class of every variable so that you can read the data correctly back into R (.csv files do not have information about the format of the variables. You have to specify it when you read the data back into R). If you use a .Rdata file R will know the type of each variable.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>In short: Make your raw data <strong>Tidy</strong> in a reproducible manner!</li>
+</ul>
+<hr />
+</div>
+<div id="prepare-your-map-map-wrangling" class="section level2">
+<h2>Prepare your map (map wrangling)</h2>
+<p>–</p>
+<ul>
+<li>Use a new Rmarkdown notebook to document the preparations done to your map and the merging of data to the map.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Use a subdirectory “maps” to do your map wrangling.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Document the source of your map, either from file or downloaded from an internet site</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Depending on the map it might be advantageous to load it into a GIS program, i.e. Qgis.</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Qgis will give you a multi layer GIS system with a GUI. The advantage is an intuitive and interactive environment. The drawback is a low level of reproducibility (work done in a GUI is notoriously difficult to make reproducible)</li>
+</ul>
+<p>–</p>
+<ul>
+<li>An alternative is to use Qgis to experiment with the map and then try to do the same reproducibly in R with the tools discussed below</li>
+</ul>
+<hr />
+</div>
+<div id="prepare-your-map-map-wrangling-1" class="section level2">
+<h2>Prepare your map (map wrangling)</h2>
+<p>–</p>
+<ul>
+<li><h2 id="start-by-filter-your-map-to-the-wanted-area">Start by filter your map to the wanted area</h2></li>
+<li><h2 id="fix-any-topological-problems-this-can-be-a-real-hassle">Fix any topological problems (this can be a real hassle)</h2></li>
+<li><h2 id="check-and-double-check-that-the-ids-in-the-map-correspond-with-the-ones-in-your-dataset.">Check (and double check) that the ids in the map correspond with the ones in your dataset.</h2></li>
+<li><h2 id="merge-your-dataset-to-the-features-points-lines-or-polygons-in-your-map.-in-qgis-or-preferably-in-r.">Merge your dataset to the “features” (points, lines or polygons) in your map. In Qgis or preferably in R.</h2></li>
+<li><h2 id="check-and-double-check-that-the-map-and-data-is-as-intended.">Check, and double check, that the map and data is as intended.</h2></li>
+<li>Save the map in the format “GeoPackage”, the “shape” format is ancient, inconvenient (3-5 separate files) and have several technical restrictions (10 char variable names, only proj4 support etc.)</li>
+</ul>
+<hr />
+</div>
+<div id="the-analysis" class="section level2">
+<h2>The analysis</h2>
+<p>–</p>
+<ul>
+<li>Read your map with the dataset into your main document</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Generate the weights matrix in R (import to GeoDa) or make it in GeoDa</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Start with an Exploratory Data Analysis (EDA) in GeoDa</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Do descriptive statistics in R</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Test for local/global spatial autocorrelation i.e. global/local Morans I in your dependent variable.</li>
+</ul>
+<hr />
+</div>
+<div id="the-analysis-1" class="section level2">
+<h2>The analysis</h2>
+<table style="width:4%;">
+<colgroup>
+<col width="4%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td>- If no spatial autocorrelation, do normal linear regression (or whatever)
+- If spatial autocorrelation present.
+- Estimate initial linear model
+- Check for spatial effects in <strong>residuals</strong>
+- Our linear model <em>might</em> (not likely) be so good that no
+spatial effects left in the residuals. If this is the case keep the plain linear model.
+- If there is spatial effects in residuals. We have to account for this.
+- Use sf/sp and test models
+- Do we have a local or global phenomenon?
+- <strong>Local</strong>: Start with SDEM and test against nested models with likelihood ratio tests
+- <strong>Global</strong>: Start with SDM and test against nested models with likelihood ratio tests
+- Thoroughly test your final spatial regression model.
+- Heteroscedasticity, normality residuals etc.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="maps-for-analysisillustration" class="section level2">
+<h2>Maps for analysis/illustration</h2>
+<p>–</p>
+<ul>
+<li>Maps for analysis often quite terse and contains little geographical information</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Should make better/more informative maps for illustrations</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Make your illustrative maps with <code>tmap</code> or <code>ggplot2</code> in R</li>
+</ul>
+<hr />
+</div>
+<div id="what-we-have-to-learn" class="section level2">
+<h2>What we have to learn</h2>
+<p>–</p>
+<ul>
+<li>Short refresh Tidyverse</li>
+</ul>
+<p>–</p>
+<ul>
+<li>How to handle maps
+<ul>
+<li>How to get them</li>
+<li>How to get them into our software</li>
+<li>How to edit/manipulate them</li>
+<li>How to link maps and data</li>
+</ul></li>
+</ul>
+<p>–</p>
+<ul>
+<li>How to generate neighbour structures</li>
+</ul>
+<hr />
+</div>
+<div id="what-we-have-to-learn-cont." class="section level2">
+<h2>What we have to learn cont.</h2>
+<p>–</p>
+<ul>
+<li>How to make weight matrices</li>
+</ul>
+<p>–</p>
+<ul>
+<li>How to run spatial regressions</li>
+</ul>
+<p>–</p>
+<ul>
+<li>How to do EDA with spatial data</li>
+</ul>
+<hr />
+</div>
+<div id="before-all-else" class="section level2">
+<h2>Before all else</h2>
+<p>–</p>
+<ul>
+<li>Update R</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Update R Studio</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Install the packages we will need</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Install GeoDa</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Install/update Qgis</li>
+</ul>
+<p>–</p>
+<ul>
+<li>Update Zotero</li>
+</ul>
+</div>
