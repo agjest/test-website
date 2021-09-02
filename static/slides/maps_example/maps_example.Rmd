@@ -91,7 +91,7 @@ myBib <- ReadBib("./met2refs.bib", check = FALSE)
 ## Import data
 
 ```{r}
-load(file="bld06_19.Rdata")
+load(file="../data/bld06_19.Rdata")
 bld90_19
 ```
 - we have 2538 observations and 16 variables

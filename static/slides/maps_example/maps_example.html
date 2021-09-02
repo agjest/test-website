@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>We have to talk about maps</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Arnstein Gjestland" />
+    <script src="maps_example_files/header-attrs/header-attrs.js"></script>
+    <link href="maps_example_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="maps_example_files/tile-view/tile-view.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# We have to talk about maps
+### Arnstein Gjestland
+### HVL
+### Autumn 2021
+
+---
+
+
+
+
+
+
+<div>
+<style type="text/css">.xaringan-extra-logo {
+width: 165px;
+height: 192px;
+z-index: 0;
+background-image: url(hvl_logo_engelsk.jpg);
+background-size: contain;
+background-repeat: no-repeat;
+position: absolute;
+top:1em;right:1em;
+}
+</style>
+<script>(function () {
+  let tries = 0
+  function addLogo () {
+    if (typeof slideshow === 'undefined') {
+      tries += 1
+      if (tries < 10) {
+        setTimeout(addLogo, 100)
+      }
+    } else {
+      document.querySelectorAll('.remark-slide-content:not(.title-slide):not(.inverse):not(.hide_logo)')
+        .forEach(function (slide) {
+          const logo = document.createElement('div')
+          logo.classList = 'xaringan-extra-logo'
+          logo.href = null
+          slide.appendChild(logo)
+        })
+    }
+  }
+  document.addEventListener('DOMContentLoaded', addLogo)
+})()</script>
+</div>
+
+
+
+---
+
+## Example
+
+- we want to study the price per square meter for single family dwellings in Norwegian muncipalities.
+- we have some data originally from SSB in the file `bld06_19.Rdata`.
+- we start by loading the data
+---
+
+## Import data
+
+
+```r
+load(file="../data/bld06_19.Rdata")
+bld90_19
+```
+
+```
+## # A tibble: 2,538 × 16
+##    knrNavn  btype    y2006 y2007 y2008 y2009 y2010 y2011 y2012 y2013 y2014 y2015
+##    &lt;chr&gt;    &lt;chr&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 0101 Ha… Andre b…   629   630   600   596   629   639   648   660   663   661
+##  2 0101 Ha… Boligbl…  2108  2088  2135  2164  2168  2168  2174  2171  2177  2202
+##  3 0101 Ha… Bygning…   181   181   181   173   173   173   173   173   236   459
+##  4 0101 Ha… Enebolig  7134  7168  7258  7323  7381  7425  7453  7528  7628  7680
+##  5 0101 Ha… Rekkehu…  1768  1812  1874  1935  1973  1995  2012  2049  2078  2109
+##  6 0101 Ha… Tomanns…  2101  2140  2155  2171  2159  2159  2181  2204  2212  2254
+##  7 0104 Mo… Andre b…   612   526   555   572   569   590   583   589   615   603
+##  8 0104 Mo… Boligbl…  3640  3763  3981  4155  4176  4216  4244  4264  4460  4560
+##  9 0104 Mo… Bygning…    89   150   179   181   181   181   194   194   250   259
+## 10 0104 Mo… Enebolig  4907  4936  4936  4982  5010  5046  4998  5018  5029  5041
+## # … with 2,528 more rows, and 4 more variables: y2016 &lt;dbl&gt;, y2017 &lt;dbl&gt;,
+## #   y2018 &lt;dbl&gt;, y2019 &lt;dbl&gt;
+```
+- we have 2538 observations and 16 variables
+- is the data __Tidy__? No!
+
+---
+## Making the data tidy
+
+- we are only interested in single family dwellings, so we start by picking those observation
+- make a new variable with municipality number
+- 'pivot_longer' to make a 'year' variable
+- contains data for the period 2006 to 2019
+
+
+```r
+sfd_06_19 &lt;- bld90_19 %&gt;% 
+  #pick 'Enebolig'
+  filter(btype == 'Enebolig') %&gt;% 
+  #make new variable with municipality number
+  mutate(knr=substr(knrNavn, start = 1, stop = 4)) %&gt;% 
+  #put our new variable at the far left
+  select(knr, everything()) %&gt;% 
+  #pivot_longer the variables y2006 to y2019
+  pivot_longer(cols = y2006:y2019, names_to = "year", names_prefix = "y", values_to = "pm2") %&gt;% 
+  #drop btype, all obs. are 'Enebolig'
+  select(-btype)
+```
+
+- Are the data tidy now?
+
+---
+
+## Tidy data?
+
+
+```r
+sfd_06_19 %&gt;% 
+  head(n = 10)
+```
+
+```
+## # A tibble: 10 × 4
+##    knr   knrNavn     year    pm2
+##    &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt; &lt;dbl&gt;
+##  1 0101  0101 Halden 2006   7134
+##  2 0101  0101 Halden 2007   7168
+##  3 0101  0101 Halden 2008   7258
+##  4 0101  0101 Halden 2009   7323
+##  5 0101  0101 Halden 2010   7381
+##  6 0101  0101 Halden 2011   7425
+##  7 0101  0101 Halden 2012   7453
+##  8 0101  0101 Halden 2013   7528
+##  9 0101  0101 Halden 2014   7628
+## 10 0101  0101 Halden 2015   7680
+```
+
+- looks OK
+
+---
+## Pick the year 2018
+
+
+```r
+sfd_18 &lt;- sfd_06_19 %&gt;% 
+  filter(year == '2018')
+
+summary(sfd_18)
+```
+
+```
+##      knr              knrNavn              year                pm2         
+##  Length:423         Length:423         Length:423         Min.   :   99.0  
+##  Class :character   Class :character   Class :character   1st Qu.:  980.5  
+##  Mode  :character   Mode  :character   Mode  :character   Median : 1843.0  
+##                                                           Mean   : 3005.1  
+##                                                           3rd Qu.: 3469.0  
+##                                                           Max.   :35733.0
+```
+
+- we have 423 observations (municipalities) and no NAs (missing values)
+- now our data should be tidy
+
+---
+
+# We need a map
+
+.pull-left[
+- Source: [geonorge (Norge digitalt)](https://kartkatalog.geonorge.no) "https://kartkatalog.geonorge.no"
+- Municipality borders 2020, we need 2018
+- [Administrative enheter - historiske versjoner](Administrative enheter - historiske versjoner)
+- 2018, sosi format?
+- wikipedia: "SOSI-formatet er et filformat for utveksling av digitale geodata. Utviklingen av SOSI-formatet startet på 1970-tallet. [1] I dag[når?] utvikles SOSI-formatet lite, siden det er ventet at GML vil overta som utvekslingsformat."
+- Recent maps are made available in other formats, but older ones only in .sosi
+- gdal has a plugin for sosi (but not part of standard installation), gdal must be compiled with the plugin enabled (multiple versions of the gdal library is asking for trouble, "been there, done that")
+]
+.pull-right[
+![:scale 80%](maps_example_insertimage_1.png)
+![:scale 80%](maps_example_insertimage_2.png)
+]
+
+---
+
+# Alternatives
+
+- an online alternative is [mygeodata.cloud/converter/sosi-to-shp](https://mygeodata.cloud/converter/sosi-to-shp) to convert from sosi to .shp (did not work late May 2021)
+- another alternative is [https://sosicon.espenandersen.no/download/](https://sosicon.espenandersen.no/download/)
+
+---
+
+# SOSI File Converter
+
+.left-column[
+- Note, shape format selected
+- Select "Create subfolder", use one subfolder per map when you have it in shape format
+]
+.right-column[
+![:scale 70%](maps_example_insertimage_3.png)
+]
+
+---
+
+# Municipality map
+
+- Qgis
+- we have got a whole collection of maps, Kommune_FLATE.shp is probably the one we want
+- the map has 428 features (here "Kommune")
+- A "feature" will be a polygon, line or point with associated data
+- The projection of the map is "EPSG:25833" or UTM zone 33N (the recommended projection when we plot the whole of Norway)
+
+---
+
+![:scale 70%](maps_example_insertimage_4.png)
+
+---
+
+# Export list of features
+
+- We export the features as a .csv file
+- This gives us the the data associated with each feature (municipality number, name etc.)
+
+---
+
+![:scale 70%](maps_example_insertimage_5.png)
+
+---
+
+## Read feature data into R
+
+
+```r
+library(readr)
+kom_2018_map &lt;- read_csv("kom_2018_map.csv")
+```
+
+- pick what we need
+
+
+```r
+kom_2018_map &lt;- kom_2018_map %&gt;% 
+  select(KOMMUNENUM,NAVN)
+
+map_knr_2018 &lt;- kom_2018_map$KOMMUNENUM
+data_knr_2018 &lt;- sfd_18$knr
+# knr in map, but not in data file
+setdiff(map_knr_2018,data_knr_2018)
+```
+
+```
+##  [1] "5020" "5033" "5038" "5031" "5016" "5053" "5013" "5036" "5051" "5048"
+## [11] "5005" "5042" "5024" "5034" "5029" "5015" "5017" "5032" "5025" "5054"
+## [21] "5021" "5037" "5027" "5047" "5044" "5046" "5012" "5026" "5050" "5045"
+## [31] "5030" "5019" "5018" "5040" "5011" "5001" "5035" "5039" "5004" "5028"
+## [41] "5052" "5049" "5014" "5043" "5041" "5023" "5022"
+```
+
+- we got "new Trøndelag". Our data uses municipality structure before 2018 to be consistent over time.
+
+---
+
+# 2017 map
+
+.pull-left[
+- Do to 2017 what we did with 2018
+- pick the variables we need
+
+
+```r
+kom_2017_map &lt;- read_csv("kom_2017_map.csv")
+kom_2017_map &lt;- kom_2017_map %&gt;% 
+  select(KOMMUNENUM,NAVN)
+```
+]
+.pull-right[
+
+- Have we got the same observations in the map as in the data file?
+
+
+```r
+map_knr_2017 &lt;- kom_2017_map$KOMMUNENUM
+data_knr_2018 &lt;- sfd_18$knr
+# in map_knr_2017, but not in data_knr_2018
+setdiff(map_knr_2017, data_knr_2018)
+```
+
+```
+## [1] "0709" "0728" "0722" "0723" "0714" "0702"
+```
+
+
+```r
+# in data_knr_2018, but not in map_knr_2017
+setdiff(data_knr_2018, map_knr_2017)
+```
+
+```
+## [1] "0712" "0715" "0729"
+```
+
+- what municipalities are these?
+- [norske kommunenummer](https://no.wikipedia.org/wiki/Norske_kommunenummer)
+]
+
+---
+
+- The problematic municipalities
+- Taken from: [https://no.wikipedia.org/wiki/Norske_kommunenummer](https://no.wikipedia.org/wiki/Norske_kommunenummer)
+
+![:scale 65%](maps_example_insertimage_6.png)
+
+---
+
+# Fix the problem
+
+- In the map we must join 0709 and 0728 into 0712 Larvik
+- In the map we must join 0702 + 0714 into 0715 Holmestrand
+- In the map we must join 0722 + 0723 into 0729 Færder
+- This can be done in R, but we do it first in Qgis.
+
+---
+
+# Qgis dissolve ("Løs opp ...")
+
+.pull-left[
+Easiest way:
+- First name the polygons
+    - right click/crtl click on the map layer 
+- Select "Egenskaper" and then "Påskrifter" (4. in the list on the left)
+- Then select "Enkle påskrifter" from the drop-down menu at the top, and select KOMMUNENUM as the variable to be used for "påskrift"
+- We know that "07" is "Vestfold" county, so we zoom in on the lower right corner
+]
+.pull-right[
+![:scale 90%](maps_example_insertimage_10.png)
+]
+
+---
+
+# Select 0709 and 0728
+
+.pull-left[
+- Choose the select tool
+- Shift-click on 0728 and 0709
+]
+.pull-right[
+![:scale 90%](maps_example_insertimage_11.png)
+]
+
+---
+
+# Dissolve (union) 0709 and 0728 into 0712 Larvik
+
+.pull-left[
+- Dissolve 
+]
+.pull-right[
+![:scale 90%](maps_example_insertimage_12.png)
+]
+
+---
+
+# Dissolve
+
+.pull-left[
+- Important! Select "Kun valgte objekter"
+- Let "Oppløst" be "midlertidig lag"
+- Click "Kjør", and then "Close"
+]
+.pull-right[
+![scale: 80%](maps_example_insertimage_14.png)
+]
+---
+
+# Qgis dissolve cont.
+
+.pull-left[
+- deselect the "Oppløst" layer
+- ![:scale 60%](maps_example_insertimage_15.png)
+- Click on the map layer and enable editing
+- ![:scale 60%](maps_example_insertimage_16.png)
+
+
+]
+.pull-right[
+- Delete selection
+- ![:scale 50%](maps_example_insertimage_17.png)
+- Change to "Oppløst", select the object
+]
+
+---
+
+# Qgis dissolve cont.
+
+.pull-left[
+- Copy the object (Rediger &gt; Kopier objekter)
+- ![:scale 60%](maps_example_insertimage_18.png)
+]
+.pull-right[
+- Change to the other layer and paste the object (Rediger &gt; Lim inn objekter)
+- Disable editing, save the map
+- ![:scale 60%](maps_example_insertimage_19.png)
+]
+---
+
+# Change name of new object
+
+.pull-left[
+- Enable editing (Click on the pencil)
+- Click on "Identifiser objekter"
+![Plot title. ](maps_example_insertimage_20.png)
+- Click on the new object
+- Click on the icon above "Objekt" heading
+![Plot title. ](maps_example_insertimage_21.png)
+]
+.pull-right[
+- Change "KOMMUNENUM to 0712
+- Name is already "Larvik", so OK
+- ![Plot title. ](maps_example_insertimage_22.png)
+- Click OK
+- Disable editing (click the pencil again) and save the map
+]
+
+# Do the same for 0715 Holmestrand and 0729 Færder
+
+- Join 0702 + 0714 into 0715 Holmestrand
+- Join 07232 + 0723 into 0729 Færder
+- Remember to save the map
+- Export the finished map as .csv format
+
+# Qgis dissolve cont.
+
+
+```r
+kom_2017_mapB &lt;- read_csv("kom_2017_mapB.csv")
+kom_2017_mapB &lt;- kom_2017_mapB %&gt;% 
+  select(KOMMUNENUM,NAVN)
+
+map_knr_2017B &lt;- kom_2017_mapB$KOMMUNENUM
+# in map_knr_2017, but not in data_knr_2018
+setdiff(map_knr_2017B, data_knr_2018)
+```
+
+```
+## character(0)
+```
+
+
+
+```r
+# in data_knr_2018, but not in map_knr_2017
+setdiff(data_knr_2018, map_knr_2017B)
+```
+
+```
+## character(0)
+```
+
+- Something wrong?
+
+
+```r
+length(data_knr_2018)
+```
+
+```
+## [1] 423
+```
+
+```r
+length(map_knr_2017B)
+```
+
+```
+## [1] 429
+```
+
+- No, in the map some municipalities are split on two, or more, polygons
+
+```r
+length(unique(data_knr_2018))
+```
+
+```
+## [1] 423
+```
+
+
+```r
+length(unique(map_knr_2017B))
+```
+
+```
+## [1] 423
+```
+
+---
+
+# How to do it in R
+
+- Start with a fresh map (run sosicon again)
+- Try with `sf::st_read()`
+
+
+```r
+library(sf)
+#Sys.setenv("SHAPE_ENCODING"= "UTF-8")
+#kom_map &lt;- st_read(dsn = 'kom_2017_R', layer = 'kom_2017_R_Kommune_FLATE')
+```
+
+- Gives: 
+"Reading layer kom_2017_R_Kommune_FLATE from data source /Users/agwd/Dev/met2/kom_2017_R using driver ESRI Shapefile
+Error in make.names(vnames, unique = TRUE) : invalid multibyte string 8
+Error during wrapup: invalid multibyte string at &lt;d8&gt;LGE
+Error: no more error handlers available (recursive errors?); invoking abort restart"
+- seems to be some problem with sosiconv, different character set in variables (Norvegian characters in .dbf) and in the values.
+
+---
+
+# Using sp and rgdal
+
+
+```r
+library(rgdal)
+kf &lt;- readOGR(dsn = 'kom_2017_R', 
+              layer = 'kom_2017_R_Kommune_FLATE', 
+              verbose = TRUE, 
+              p4s=NULL,  
+              drop_unsupported_fields=TRUE, 
+              use_iconv = TRUE, 
+              encoding = "UTF-8")
+```
+
+```
+## OGR data source with driver: ESRI Shapefile 
+## Source: "/Users/ag/Local Documents/Dev/git/test-website/static/slides/maps_example/kom_2017_R", layer: "kom_2017_R_Kommune_FLATE"
+## with 432 features
+## It has 12 fields
+```
+
+---
+
+# Using sp and rgdal cont.
+
+
+```r
+# Drop some of the variables of no interest to us
+head(kf[, c(1:3, length(names(kf)))], n=1)
+```
+
+```
+## class       : SpatialPolygonsDataFrame 
+## features    : 1 
+## extent      : 1019225, 1101314, 7833981, 7881130  (xmin, xmax, ymin, ymax)
+## crs         : +proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs 
+## variables   : 4
+## names       : KOMMUNENUM, LOKALID..., NAVN......, TYPE...... 
+## value       :       2003,     172718,      Vadsø,      FLATE
+```
+
+
+uses ```NA``` and ```NA..1``` as names for the two problematic variables ```REKKEFØLGE``` og ```SPRÅK```
+we do not need them, so OK.
+What`s important for us is to get the map read into R and also preserve  the right encoding for the municipality names (which might contain Norwegian characters)
+
+---
+
+# Working with the rgdal map
+
+- Pick the two variables we want, KOMMUNENUM and NAVN......
+- Change the names
+- Plot the map
+
+
+```r
+# variable 1 and 3
+kf &lt;- kf[,c(1,3)]
+names(kf) &lt;- c("knr", "kNavn")
+# Too time consuming for the slides
+#plot(kf)
+```
+
+---
+
+# More work on kf
+
+- Check class
+
+
+```r
+class(kf)
+```
+
+```
+## [1] "SpatialPolygonsDataFrame"
+## attr(,"package")
+## [1] "sp"
+```
+
+- Convert to sf object
+
+
+```r
+# Tools to convert from sp to sf, and from sf to sp
+kf_sf &lt;- st_as_sf(kf)
+class(kf_sf)
+```
+
+```
+## [1] "sf"         "data.frame"
+```
+
+---
+
+# More work on kf cont.
+
+
+```r
+dim(kf_sf)
+```
+
+```
+## [1] 432   3
+```
+
+```r
+head(kf_sf, n = 2)
+```
+
+```
+## Simple feature collection with 2 features and 2 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 228157.8 ymin: 7122683 xmax: 1101314 ymax: 7881130
+## Projected CRS: ETRS89 / UTM zone 33N
+##    knr kNavn                       geometry
+## 0 2003 Vadsø POLYGON ((1032759 7861936, ...
+## 1 1633  Osen POLYGON ((244675.8 7151794,...
+```
+
+---
+
+# Merging municipalities
+
+- Select the municipalities that are not merged
+- Merge municipalities, for instance 0709 + 0728 to 0712 Larvik
+- Put the map together again
+
+
+```r
+# not merged
+# remember kf_sf works well with the Tidyverse
+kf_sf_nm &lt;- kf_sf %&gt;% 
+  # not in c()
+  filter(!knr %in% c("0709", "0728", "0702", "0714", "0722", "0723"))
+dim(kf_sf_nm)
+```
+
+```
+## [1] 426   3
+```
+
+---
+
+# Merging municipalities cont.
+
+
+```r
+Larvik_0712 &lt;- kf_sf %&gt;% 
+  filter(knr %in% c("0709", "0728")) %&gt;% 
+  st_union() %&gt;%
+  # we have a sfc object (polygon), ned sf data.frame
+  st_sf(knr="0712", kNavn="Larvik")  %&gt;% 
+  # The geometry clumn has ended up with the name ".",
+  # change it back to geometry
+  rename("geometry" = ".")
+
+Holmestrand_0715 &lt;- kf_sf %&gt;% 
+  filter(knr %in% c("0702", "0714")) %&gt;% 
+  st_union() %&gt;%
+  st_sf(knr="0715", kNavn="Holmestrand") %&gt;% 
+  rename("geometry" = ".")
+
+Faerder_0729 &lt;- kf_sf %&gt;% 
+  filter(knr %in% c("0722", "0723")) %&gt;% 
+  st_union() %&gt;%
+  st_sf(knr="0729", kNavn="Færder") %&gt;% 
+  rename("geometry" = ".")
+```
+
+---
+
+# Bind the parts together
+
+- we use rbind() to assemble the parts
+
+--
+
+
+```r
+kf_sf_new &lt;- rbind(kf_sf_nm, 
+                   Larvik_0712, 
+                   Holmestrand_0715, 
+                   Faerder_0729)
+class(kf_sf_new)
+```
+
+```
+## [1] "sf"         "data.frame"
+```
+
+```r
+head(kf_sf_new)
+```
+
+```
+## Simple feature collection with 6 features and 2 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -79642.38 ymin: 6432782 xmax: 1101314 ymax: 7881130
+## Projected CRS: ETRS89 / UTM zone 33N
+##    knr        kNavn                       geometry
+## 1 2003        Vadsø POLYGON ((1032759 7861936, ...
+## 2 1633         Osen POLYGON ((244675.8 7151794,...
+## 3 1438    Bremanger POLYGON ((-66423.89 6897184...
+## 4 1244    Austevoll POLYGON ((-79575.13 6709024...
+## 5 1001 Kristiansand POLYGON ((81925.32 6466723,...
+## 6 0914  Tvedestrand POLYGON ((136145.2 6512556,...
+```
+
+---
+
+# Plot new Vestfold
+
+
+```r
+kf_sf_new %&gt;% 
+  filter(as.numeric(knr) &gt; 700 &amp; as.numeric(knr) &lt; 800) %&gt;% 
+  select(knr) %&gt;% 
+  plot(key.pos=3)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-25-1.png" width="100%" /&gt;
+
+---
+
+# Merge map and data
+
+- We can do the merge of data and map in Qgis
+- Here we do it in R, using `sf` our new toy
+
+
+```r
+dim(kf_sf_new)
+```
+
+```
+## [1] 429   3
+```
+
+
+```r
+dim(sfd_18)
+```
+
+```
+## [1] 423   4
+```
+
+- What's wrong
+
+---
+
+# Merge map and data cont.
+
+- Nothing, but som municipalities have multiple polygons
+
+
+```r
+kf_sf_new %&gt;% 
+  filter(knr == "0710")
+```
+
+```
+## Simple feature collection with 2 features and 2 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 214716 ymin: 6523881 xmax: 236648.8 ymax: 6593351
+## Projected CRS: ETRS89 / UTM zone 33N
+##    knr      kNavn                       geometry
+## 1 0710 Sandefjord POLYGON ((220354.2 6572257,...
+## 2 0710 Sandefjord POLYGON ((220485 6561491, 2...
+```
+
+---
+
+# Merge map and data cont.
+
+.left-column[
+- 0710 Sandefjord has an enclave inside 0712 Larvik
+]
+.right-column[
+
+```r
+kf_sf_new %&gt;% 
+  filter(knr %in% c("0710", "0712")) %&gt;% 
+  select(kNavn) %&gt;% 
+  plot(key.pos=3)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-29-1.png" width="100%" /&gt;
+]
+
+---
+
+# Find duplicates (more than one polygon)
+
+
+```r
+kf_sf_new %&gt;% 
+  filter(duplicated(knr))
+```
+
+```
+## Simple feature collection with 6 features and 2 fields
+## Geometry type: POLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 148155.3 ymin: 6561053 xmax: 298002.9 ymax: 7048475
+## Projected CRS: ETRS89 / UTM zone 33N
+##    knr      kNavn                       geometry
+## 1 1663     Malvik POLYGON ((292666.4 7030893,...
+## 2 0819       Nome POLYGON ((148567.8 6586721,...
+## 3 1663     Malvik POLYGON ((280936.1 7037994,...
+## 4 0215      Frogn POLYGON ((249548 6626601, 2...
+## 5 0701     Horten POLYGON ((238010.9 6591209,...
+## 6 0710 Sandefjord POLYGON ((220485 6561491, 2...
+```
+
+
+---
+
+# Plot Malvik
+
+
+```r
+kf_sf_new %&gt;% filter(knr %in% c("1663")) %&gt;% select(kNavn) %&gt;% plot(key.pos=4)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-31-1.png" width="100%" /&gt;
+
+---
+
+# Make multipolygons
+
+
+```r
+kf_sf_423 &lt;- kf_sf_new %&gt;%
+  # kNavn unnecessary, but nice trick to carry along the variable
+  group_by(knr, kNavn) %&gt;%
+  summarise(geometry = st_combine(geometry)) %&gt;% 
+  ungroup()
+
+dim(kf_sf_423)
+```
+
+```
+## [1] 423   3
+```
+
+---
+
+# Make multipolygons cont.
+
+
+```r
+head(kf_sf_423, n=3)
+```
+
+```
+## Simple feature collection with 3 features and 2 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 246920.8 ymin: 6531541 xmax: 311244.9 ymax: 6607757
+## Projected CRS: ETRS89 / UTM zone 33N
+## # A tibble: 3 × 3
+##   knr   kNavn                                                           geometry
+##   &lt;chr&gt; &lt;chr&gt;                                                 &lt;MULTIPOLYGON [m]&gt;
+## 1 0101  Halden    (((279596.3 6555228, 280474 6556668, 280474 6556668, 281380.5…
+## 2 0104  Moss      (((247465.5 6599443, 248497.9 6601261, 248497.9 6601261, 2501…
+## 3 0105  Sarpsborg (((273359.1 6577360, 273356.2 6577381, 273356.2 6577381, 2733…
+```
+
+---
+
+# Plot 1663 Malvik
+
+
+```r
+# Now as MULTIPOLYGON
+kf_sf_423 %&gt;% filter(knr %in% c("1663")) %&gt;% select(kNavn) %&gt;% plot(key.pos=4)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-34-1.png" width="100%" /&gt;
+
+---
+
+# Færder
+
+
+```r
+kf_sf_423 %&gt;% 
+  filter(knr %in% c("0729")) %&gt;% 
+  select(kNavn) %&gt;% 
+  plot(key.pos=1)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-35-1.png" width="100%" /&gt;
+
+---
+
+# Finally ready to join
+
+
+```r
+kf_sf_423_2018_pm2 &lt;- left_join(x = kf_sf_423, y =  sfd_18, by = "knr")
+# Next take a long time
+#View(tmp)
+head(kf_sf_423_2018_pm2, n = 5)
+```
+
+```
+## Simple feature collection with 5 features and 5 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 245176.8 ymin: 6521821 xmax: 311244.9 ymax: 6607757
+## Projected CRS: ETRS89 / UTM zone 33N
+## # A tibble: 5 × 6
+##   knr   kNavn                                     geometry knrNavn   year    pm2
+##   &lt;chr&gt; &lt;chr&gt;                           &lt;MULTIPOLYGON [m]&gt; &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt;
+## 1 0101  Halden      (((279596.3 6555228, 280474 6556668, … 0101 Hal… 2018   7864
+## 2 0104  Moss        (((247465.5 6599443, 248497.9 6601261… 0104 Moss 2018   5084
+## 3 0105  Sarpsborg   (((273359.1 6577360, 273356.2 6577381… 0105 Sar… 2018  13028
+## 4 0106  Fredrikstad (((249999.8 6574664, 249814.3 6575270… 0106 Fre… 2018  18700
+## 5 0111  Hvaler      (((251957.3 6553129, 256847.8 6552769… 0111 Hva… 2018   1923
+```
+
+---
+
+# Finally ready to join cont.
+
+
+```r
+kf_sf_423_2018_pm2 &lt;- kf_sf_423_2018_pm2 %&gt;% 
+  # split knrNavn from sfd_18 into sfd_knr and sfd_kNavn
+  separate(knrNavn, into = c("sfd_knr", "sfd_kNavn"), sep = "\\d\\s") %&gt;% 
+  # we do not have to specify geometry it`s taken automatically
+  select(knr, kNavn, sfd_kNavn, pm2)
+```
+
+---
+
+# Finally ready to join cont.
+
+
+```r
+head(kf_sf_423_2018_pm2, n = 5)
+```
+
+```
+## Simple feature collection with 5 features and 4 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 245176.8 ymin: 6521821 xmax: 311244.9 ymax: 6607757
+## Projected CRS: ETRS89 / UTM zone 33N
+## # A tibble: 5 × 5
+##   knr   kNavn       sfd_kNavn     pm2                                   geometry
+##   &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt;       &lt;dbl&gt;                         &lt;MULTIPOLYGON [m]&gt;
+## 1 0101  Halden      Halden       7864 (((279596.3 6555228, 280474 6556668, 2804…
+## 2 0104  Moss        Moss         5084 (((247465.5 6599443, 248497.9 6601261, 24…
+## 3 0105  Sarpsborg   Sarpsborg   13028 (((273359.1 6577360, 273356.2 6577381, 27…
+## 4 0106  Fredrikstad Fredrikstad 18700 (((249999.8 6574664, 249814.3 6575270, 24…
+## 5 0111  Hvaler      Hvaler       1923 (((251957.3 6553129, 256847.8 6552769, 25…
+```
+
+
+---
+
+# Check that the names are equal
+
+
+```r
+kf_sf_423_2018_pm2 %&gt;% 
+  filter(!identical(kNavn, sfd_kNavn)) %&gt;% 
+  print(n=5)
+```
+
+```
+## Simple feature collection with 423 features and 4 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -99551.21 ymin: 6426048 xmax: 1121941 ymax: 7962744
+## Projected CRS: ETRS89 / UTM zone 33N
+## # A tibble: 423 × 5
+##   knr   kNavn       sfd_kNavn     pm2                                   geometry
+## * &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt;       &lt;dbl&gt;                         &lt;MULTIPOLYGON [m]&gt;
+## 1 0101  Halden      Halden       7864 (((279596.3 6555228, 280474 6556668, 2804…
+## 2 0104  Moss        Moss         5084 (((247465.5 6599443, 248497.9 6601261, 24…
+## 3 0105  Sarpsborg   Sarpsborg   13028 (((273359.1 6577360, 273356.2 6577381, 27…
+## 4 0106  Fredrikstad Fredrikstad 18700 (((249999.8 6574664, 249814.3 6575270, 24…
+## 5 0111  Hvaler      Hvaler       1923 (((251957.3 6553129, 256847.8 6552769, 25…
+## # … with 418 more rows
+```
+
+---
+
+# Choose Norvegian names, not official names
+
+- We choose Norvegian names
+
+
+```r
+kf_sf_423_2018_pm2 &lt;- kf_sf_423_2018_pm2 %&gt;% 
+  # slect Norwegian names, not offical names
+  select(knr, sfd_kNavn, pm2) %&gt;% 
+  rename(kNavn = sfd_kNavn)
+```
+
+---
+
+# Histogram of price per square meter 
+
+- Histogram of price per square meter for single family dwellings in Norwegian municipalities in 2018
+
+
+```r
+kf_sf_423_2018_pm2 %&gt;% 
+  # Remember + not %&gt;% 
+  ggplot(aes(pm2)) +
+  geom_histogram()
+```
+
+---
+
+# Histogram of price per square meter 
+
+- Histogram of price per square meter for single family dwellings in Norwegian municipalities in 2018
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-42-1.png" width="100%" /&gt;
+
+---
+
+# Log-transform pm2
+
+- Seems like a log-transformation might be appropriate 
+
+
+```r
+kf_sf_423_2018_pm2 &lt;- kf_sf_423_2018_pm2 %&gt;% 
+  # log default 'natural logarithms, i.e. ln()
+  mutate(log_pm2 = log(pm2))
+```
+
+---
+
+# Log-transform pm2 cont.
+
+
+```r
+kf_sf_423_2018_pm2 %&gt;% 
+  # Remember + not %&gt;% 
+  ggplot(aes(log_pm2)) +
+  geom_histogram()
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-44-1.png" width="100%" /&gt;
+
+---
+
+# log_pm2 Eastern Norway
+
+
+```r
+# Take to long to plot, cache it 
+kf_sf_423_2018_pm2 %&gt;%
+  filter(substr(knr, start = 1, stop = 2) %in% c("01", "02", "03", "06", "07")) %&gt;%
+  select(log_pm2) %&gt;%
+  plot(key.pos=1)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-45-1.png" width="100%" /&gt;
+
+---
+
+# log_pm2 Rogaland
+
+
+```r
+kf_sf_423_2018_pm2 %&gt;% 
+  filter(substr(knr, start = 1, stop = 2) %in% c("11")) %&gt;% 
+  select(log_pm2) %&gt;% 
+  plot(key.pos=1)
+```
+
+&lt;img src="maps_example_files/figure-html/unnamed-chunk-46-1.png" width="100%" /&gt;
+
+---
+
+# Write out map
+
+- Time to write out our map
+- By default we are not allowed to overwrite, hence **append=FALSE**
+
+
+```r
+# Do not use unless you are forced
+st_write(obj = kf_sf_423, dsn = "kf_sf_423", driver = "ESRI Shapefile", append=FALSE)
+```
+
+```
+## Writing layer `kf_sf_423' to data source `kf_sf_423' using driver `ESRI Shapefile'
+## Writing 423 features with 2 fields and geometry type Multi Polygon.
+```
+
+```r
+# use
+st_write(obj = kf_sf_423, dsn = "kf_sf_423.gpkg", driver = "GPKG", append=FALSE)
+```
+
+```
+## Writing layer `kf_sf_423' to data source `kf_sf_423.gpkg' using driver `GPKG'
+## Writing 423 features with 2 fields and geometry type Multi Polygon.
+```
+
+- For use with Geoda
+
+
+```r
+st_write(obj = kf_sf_423_2018_pm2, dsn = "kf_sf_423_2018_pm2.gpkg", driver = "GPKG", append=FALSE)
+```
+
+```
+## Writing layer `kf_sf_423_2018_pm2' to data source 
+##   `kf_sf_423_2018_pm2.gpkg' using driver `GPKG'
+## Writing 423 features with 4 fields and geometry type Multi Polygon.
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script src="macros.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
