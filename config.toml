@@ -2,4 +2,4 @@ baseURL = 'http://127.0.0.1/test-website'
 languageCode = 'en-us'
 title = 'My New Hugo Site'
 theme = "blank"
-math: true
+math = true
