@@ -2,6 +2,9 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://127.0.0.1/test-website/about/</loc>
+    <priority>0</priority>
+  </url><url>
     <loc>http://127.0.0.1/test-website/categories/</loc>
   </url><url>
     <loc>http://127.0.0.1/test-website/03_map_and_proj_pres/</loc>
